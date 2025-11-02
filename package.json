@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "A simple Telex AI agent that provides daily sunrise, sunset, and moon phase times for any city.",
   "type": "module",
-  "main": "src/mastra.ts",
+  "main": "src/index.ts",
   "scripts": {
-    "dev": "node --watch src/mastra.ts",
-    "start": "node src/mastra.ts"
+    "dev": "node --watch src/index.ts",
+    "start": "node src/index.ts"
   },
   "dependencies": {
     "@mastra/core": "latest",
