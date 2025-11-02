@@ -1,0 +1,37 @@
+{
+  "name": "telex-sunrise-agent",
+  "version": "1.0.0",
+  "description": "A simple Telex AI agent that provides daily sunrise, sunset, and moon phase times for any city.",
+  "type": "module",
+  "main": "src/mastra.ts",
+  "scripts": {
+    "dev": "node --watch src/mastra.ts",
+    "start": "node src/mastra.ts"
+  },
+  "dependencies": {
+    "@mastra/core": "latest",
+    "@mastra/memory": "latest",
+    "@mastra/libsql": "latest",
+    "@mastra/loggers": "latest",
+    "zod": "^3.23.8",
+    "node-fetch": "^3.3.2",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "ts-node": "^10.9.2"
+  },
+  "keywords": [
+    "mastra",
+    "telex",
+    "ai-agent",
+    "sunrise",
+    "sunset",
+    "moon-phase",
+    "weather",
+    "open-meteo",
+    "api"
+  ],
+  "author": "Aliyu Adebayo",
+  "license": "MIT"
+}
