@@ -15,7 +15,7 @@ export const sunriseAgent = new Agent({
       Day length is 12 hours 22 minutes. The moon phase is Waxing Crescent, 
       rising at 9:14 AM and setting at 9:18 PM."
   `,
-  model: 'google/gemini-2.0-flash',
+  model: 'openai/gpt-4o-mini'
   tools: { sunriseTool },
   memory: new Memory({
     storage: new LibSQLStore({
