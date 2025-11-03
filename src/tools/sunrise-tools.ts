@@ -22,6 +22,7 @@ function getMoonPhase(date = new Date()): string {
   return phases[phaseIndex] || 'Unknown';
 }
 
+
 export const sunriseTool = createTool({
   id: 'get-sunrise',
   description: 'Fetch sunrise, sunset, and day length for a given city and estimate moon phase',
@@ -35,10 +36,11 @@ export const sunriseTool = createTool({
     dayLength: z.string(),
     moonPhase: z.string(),
   }),
+
   execute: async ({ context }) => {
     const { city } = context;
 
-    // Get coordinates using Open-Meteo.
+    // Get coordinates for the city
     const geoRes = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`
     );
@@ -50,7 +52,15 @@ export const sunriseTool = createTool({
 
     const { latitude, longitude, name } = geoData.results[0];
 
-    // Fetch sunrise/sunset data
+    //Get the local timezone for the coordinates
+    const tzRes = await fetch(
+      `https://api.open-meteo.com/v1/timezone?latitude=${latitude}&longitude=${longitude}`
+    );
+    const tzData = await tzRes.json();
+
+    const timeZone = tzData.timezone || 'UTC';
+
+    //Fetch sunrise/sunset data (in UTC)
     const sunRes = await fetch(
       `https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&formatted=0`
     );
@@ -61,13 +71,32 @@ export const sunriseTool = createTool({
     }
 
     const { sunrise, sunset, day_length } = sunData.results;
+
+    // Convert UTC to local timezone
+    const fmt = (iso: string) =>
+      new Intl.DateTimeFormat('en-GB', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone,
+      }).format(new Date(iso));
+
+    const sunriseLocal = fmt(sunrise);
+    const sunsetLocal = fmt(sunset);
+
+    // Format day length
+    const hours = Math.floor(day_length / 3600);
+    const minutes = Math.floor((day_length % 3600) / 60);
+    const dayLengthFormatted = `${hours} hours ${minutes} minutes`;
+
+    // Moon phase
     const moonPhase = getMoonPhase();
 
     return {
       city: name,
-      sunrise: new Date(sunrise).toLocaleTimeString(),
-      sunset: new Date(sunset).toLocaleTimeString(),
-      dayLength: day_length,
+      sunrise: sunriseLocal,
+      sunset: sunsetLocal,
+      dayLength: dayLengthFormatted,
       moonPhase,
     };
   },
