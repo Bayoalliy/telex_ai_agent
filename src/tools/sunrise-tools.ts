@@ -24,7 +24,7 @@ function getMoonPhase(date = new Date()): string {
 
 export const sunriseTool = createTool({
   id: 'get-sunrise',
-  description: 'Fetch accurate local sunrise, sunset, and day length for a given city with moon phase',
+  description: 'Fetch sunrise, sunset, and day length for a given city and estimate moon phase',
   inputSchema: z.object({
     city: z.string().describe('City name'),
   }),
@@ -35,56 +35,50 @@ export const sunriseTool = createTool({
     dayLength: z.string(),
     moonPhase: z.string(),
   }),
-
   execute: async ({ context }) => {
     const { city } = context;
 
-    const geoRes = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`
-    );
+    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`);
     const geoData = await geoRes.json();
 
-    if (!geoData.results?.[0]) {
-      throw new Error(`Could not find location '${city}'`);
-    }
+    if (!geoData.results?.[0]) throw new Error(`Could not find location '${city}'`);
+    const { latitude, longitude, name } = geoData.results[0];
 
-    const { latitude, longitude, name, timezone } = geoData.results[0];
-
-    const astroRes = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=sunrise,sunset&timezone=${timezone}`
+    const sunRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=sunrise,sunset&timezone=auto`
     );
-    const astroData = await astroRes.json();
+    const sunData = await sunRes.json();
 
-    if (!astroData.daily?.sunrise?.[0] || !astroData.daily?.sunset?.[0]) {
-      throw new Error('Failed to fetch astronomy data');
-    }
+    if (!sunData.daily) throw new Error('Failed to fetch sunrise/sunset data');
 
-    const sunrise = astroData.daily.sunrise[0];
-    const sunset = astroData.daily.sunset[0];
-    const dayLengthSec = astroData.daily.day_length[0];
+    const timezone = sunData.timezone;
+    const sunriseISO = sunData.daily.sunrise[0];
+    const sunsetISO = sunData.daily.sunset[0];
 
-    const hours = Math.floor(dayLengthSec / 3600);
-    const minutes = Math.floor((dayLengthSec % 3600) / 60);
+    const sunrise = new Date(sunriseISO).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: timezone,
+    });
+    const sunset = new Date(sunsetISO).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: timezone,
+    });
+
+    const sunriseDate = new Date(sunriseISO);
+    const sunsetDate = new Date(sunsetISO);
+    const diffMs = sunsetDate - sunriseDate;
+    const hours = Math.floor(diffMs / 3600000);
+    const minutes = Math.floor((diffMs % 3600000) / 60000);
     const dayLength = `${hours} hours ${minutes} minutes`;
 
-    const fmt = (iso: string) =>
-      new Intl.DateTimeFormat('en-GB', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-        timeZone: timezone,
-      }).format(new Date(iso));
-
-    const sunriseLocal = fmt(sunrise);
-    const sunsetLocal = fmt(sunset);
-
-    // Moon phase
     const moonPhase = getMoonPhase();
 
     return {
       city: name,
-      sunrise: sunrise,
-      sunset: sunset,
+      sunrise,
+      sunset,
       dayLength,
       moonPhase,
     };
