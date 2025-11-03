@@ -8,6 +8,15 @@ export const a2aAgentRoute = registerApiRoute('/a2a/agent/:agentId', {
       const mastra = c.get('mastra');
       const agentId = c.req.param('agentId');
       const body = await c.req.json();
+
+      if (!body.length) {
+        return c.json({
+	jsonrpc: '2.0',
+	id: requestId || null,
+	error: { code: -32600, message: 'Invalid JSON-RPC 2.0 request' },
+        }, 200);
+      }
+
       const { jsonrpc, id: requestId, method, params } = body;
 
       // Validate JSON-RPC envelope

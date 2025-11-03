@@ -16,7 +16,8 @@ export const sunriseAgent = new Agent({
       Day length is 12 hours 22 minutes. The moon phase is Waxing Crescent, 
       rising at 9:14 AM and setting at 9:18 PM local time.
       A waxing crescent is the first lunar phase after the new moon, appearing as a thin, growing sliver of light that is visible in the sky."
-  `,
+
+`,
   model: 'google/gemini-2.0-flash',
   tools: { sunriseTool },
   memory: new Memory({
@@ -26,4 +27,3 @@ export const sunriseAgent = new Agent({
   }),
 });
 
-console.log("Google Key present:", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
