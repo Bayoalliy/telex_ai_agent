@@ -1,5 +1,8 @@
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
+import { format, zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { differenceInMinutes, formatDuration } from 'date-fns';
+
 
 // Moon phase calculation
 function getMoonPhase(date = new Date()): string {
@@ -50,29 +53,22 @@ export const sunriseTool = createTool({
     const sunData = await sunRes.json();
 
     if (!sunData.daily) throw new Error('Failed to fetch sunrise/sunset data');
-
     const timezone = sunData.timezone;
     const sunriseISO = sunData.daily.sunrise[0];
     const sunsetISO = sunData.daily.sunset[0];
+        
+    const sunriseDate = zonedTimeToUtc(sunriseISO, timezone);
+    const sunsetDate = zonedTimeToUtc(sunsetISO, timezone);
 
-    const sunriseDate = new Date(sunriseISO);
-    const sunsetDate = new Date(sunsetISO);
+    const sunrise = format(utcToZonedTime(sunriseDate, timezone), 'hh:mm a', { timeZone: timezone });
+    const sunset = format(utcToZonedTime(sunsetDate, timezone), 'hh:mm a', { timeZone: timezone });
 
-    const sunrise = sunriseDate.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: timezone,
-    });
-    const sunset = sunsetDate.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: timezone,
-    });
-
-    const diffMs = sunsetDate - sunriseDate;
-    const hours = Math.floor(diffMs / 3600000);
-    const minutes = Math.floor((diffMs % 3600000) / 60000);
+    const durationMinutes = differenceInMinutes(sunsetDate, sunriseDate);
+    const hours = Math.floor(durationMinutes / 60);
+    const minutes = durationMinutes % 60;
     const dayLength = `${hours} hours ${minutes} minutes`;
+
+
 
     const moonPhase = getMoonPhase();
 
