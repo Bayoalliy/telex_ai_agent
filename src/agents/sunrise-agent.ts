@@ -23,3 +23,5 @@ export const sunriseAgent = new Agent({
     }),
   }),
 });
+
+console.log("Google Key present:", !!process.env.GOOGLE_GENERATIVE_AI_API_KEY);
