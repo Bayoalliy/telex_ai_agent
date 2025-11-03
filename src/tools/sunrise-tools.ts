@@ -55,19 +55,20 @@ export const sunriseTool = createTool({
     const sunriseISO = sunData.daily.sunrise[0];
     const sunsetISO = sunData.daily.sunset[0];
 
-    const sunrise = new Date(sunriseISO).toLocaleTimeString('en-US', {
+    const sunriseDate = new Date(sunriseISO);
+    const sunsetDate = new Date(sunsetISO);
+
+    const sunrise = sunriseDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: timezone,
     });
-    const sunset = new Date(sunsetISO).toLocaleTimeString('en-US', {
+    const sunset = sunsetDate.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: timezone,
     });
 
-    const sunriseDate = new Date(sunriseISO);
-    const sunsetDate = new Date(sunsetISO);
     const diffMs = sunsetDate - sunriseDate;
     const hours = Math.floor(diffMs / 3600000);
     const minutes = Math.floor((diffMs % 3600000) / 60000);
