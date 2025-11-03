@@ -19,9 +19,7 @@
   },
   "devDependencies": {
     "typescript": "^5.6.3",
-    "ts-node": "^10.9.2",
-    "date-fns": "latest",
-    "date-fns-tz": "latest"
+    "ts-node": "^10.9.2"
   },
   "keywords": [
     "mastra",
