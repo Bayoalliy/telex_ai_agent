@@ -83,8 +83,8 @@ export const sunriseTool = createTool({
 
     return {
       city: name,
-      sunrise: sunriseLocal,
-      sunset: sunsetLocal,
+      sunrise: sunrise,
+      sunset: sunset,
       dayLength,
       moonPhase,
     };
