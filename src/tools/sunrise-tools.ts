@@ -22,10 +22,9 @@ function getMoonPhase(date = new Date()): string {
   return phases[phaseIndex] || 'Unknown';
 }
 
-
 export const sunriseTool = createTool({
   id: 'get-sunrise',
-  description: 'Fetch sunrise, sunset, and day length for a given city and estimate moon phase',
+  description: 'Fetch accurate local sunrise, sunset, and day length for a given city with moon phase',
   inputSchema: z.object({
     city: z.string().describe('City name'),
   }),
@@ -40,7 +39,6 @@ export const sunriseTool = createTool({
   execute: async ({ context }) => {
     const { city } = context;
 
-    // Get coordinates for the city
     const geoRes = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`
     );
@@ -50,44 +48,35 @@ export const sunriseTool = createTool({
       throw new Error(`Could not find location '${city}'`);
     }
 
-    const { latitude, longitude, name } = geoData.results[0];
+    const { latitude, longitude, name, timezone } = geoData.results[0];
 
-    //Get the local timezone for the coordinates
-    const tzRes = await fetch(
-      `https://api.open-meteo.com/v1/timezone?latitude=${latitude}&longitude=${longitude}`
+    const astroRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=sunrise,sunset&timezone=${timezone}`
     );
-    const tzData = await tzRes.json();
+    const astroData = await astroRes.json();
 
-    const timeZone = tzData.timezone || 'UTC';
-
-    //Fetch sunrise/sunset data (in UTC)
-    const sunRes = await fetch(
-      `https://api.sunrise-sunset.org/json?lat=${latitude}&lng=${longitude}&formatted=0`
-    );
-    const sunData = await sunRes.json();
-
-    if (!sunData.results) {
-      throw new Error('Failed to fetch sunrise/sunset data');
+    if (!astroData.daily?.sunrise?.[0] || !astroData.daily?.sunset?.[0]) {
+      throw new Error('Failed to fetch astronomy data');
     }
 
-    const { sunrise, sunset, day_length } = sunData.results;
+    const sunrise = astroData.daily.sunrise[0];
+    const sunset = astroData.daily.sunset[0];
+    const dayLengthSec = astroData.daily.day_length[0];
 
-    // Convert UTC to local timezone
+    const hours = Math.floor(dayLengthSec / 3600);
+    const minutes = Math.floor((dayLengthSec % 3600) / 60);
+    const dayLength = `${hours} hours ${minutes} minutes`;
+
     const fmt = (iso: string) =>
       new Intl.DateTimeFormat('en-GB', {
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-        timeZone,
+        timeZone: timezone,
       }).format(new Date(iso));
 
     const sunriseLocal = fmt(sunrise);
     const sunsetLocal = fmt(sunset);
-
-    // Format day length
-    const hours = Math.floor(day_length / 3600);
-    const minutes = Math.floor((day_length % 3600) / 60);
-    const dayLengthFormatted = `${hours} hours ${minutes} minutes`;
 
     // Moon phase
     const moonPhase = getMoonPhase();
@@ -96,7 +85,7 @@ export const sunriseTool = createTool({
       city: name,
       sunrise: sunriseLocal,
       sunset: sunsetLocal,
-      dayLength: dayLengthFormatted,
+      dayLength,
       moonPhase,
     };
   },
